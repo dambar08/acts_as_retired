@@ -1,0 +1,73 @@
+# This workflow will download a prebuilt Ruby version, install dependencies and
+# run tests with Rake
+# For more information see: https://github.com/marketplace/actions/setup-ruby-jruby-and-truffleruby
+
+name: CI
+
+"on":
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '16 4 12 * *'
+  workflow_dispatch:
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        ruby: ["3.1", "3.2", "3.3", "3.4", "jruby-9.4"]
+        gemfile:
+          - active_record_61
+          - active_record_70
+          - active_record_71
+          - active_record_72
+          - active_record_80
+        exclude:
+          # The activerecord-jdbcsqlite3-adapter gem does not work with Rails
+          # 7.1 and above yet
+          - ruby: "jruby-9.4"
+            gemfile: active_record_71
+          - ruby: "jruby-9.4"
+            gemfile: active_record_72
+          - ruby: "jruby-9.4"
+            gemfile: active_record_80
+          # Rails 8.0 requires Ruby 3.2
+          - ruby: "3.1"
+            gemfile: active_record_80
+          # Rails 6.1 and 7.0 do not support Ruby 3.4
+          - ruby: "3.4"
+            gemfile: active_record_61
+          - ruby: "3.4"
+            gemfile: active_record_70
+
+    env:
+      BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}.gemfile
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Run tests
+        run: bundle exec rake test
+
+  rubocop:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Run RuboCop
+        run: bundle exec rubocop -P

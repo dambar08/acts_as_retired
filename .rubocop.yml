@@ -1,0 +1,67 @@
+inherit_from: .rubocop_todo.yml
+
+inherit_mode:
+  merge:
+    - Exclude
+
+require:
+  - rubocop-minitest
+  - rubocop-packaging
+  - rubocop-performance
+  - rubocop-rake
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.1
+
+# Put development dependencies in the gemspec so rubygems.org knows about them
+Gemspec/DevelopmentDependencies:
+  EnforcedStyle: gemspec
+
+Layout/LineContinuationLeadingSpace:
+  EnforcedStyle: leading
+
+# Be lenient with line length
+Layout/LineLength:
+  Max: 92
+
+# Multi-line method calls should be simply indented. Aligning them makes it
+# even harder to keep a sane line length.
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+# Multi-line assignment should be simply indented. Aligning them makes it even
+# harder to keep a sane line length.
+Layout/MultilineOperationIndentation:
+  EnforcedStyle: indented
+
+# Allow minitest-spec blocks to have any length
+Metrics/BlockLength:
+  Exclude:
+    - 'test/integration/**_test.rb'
+
+# Allow test classes to have any length
+Metrics/ClassLength:
+  Exclude:
+    - 'test/**/*'
+
+# Allow test methods to have any length
+Metrics/MethodLength:
+  Exclude:
+    - 'test/**/*'
+
+# Allow else clauses with explicit nil value
+Style/EmptyElse:
+  EnforcedStyle: empty
+
+# In guard clauses, if ! is often more immediately clear
+Style/NegatedIf:
+  Enabled: false
+
+# Do not commit to use of interpolation
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+# Prefer symbols to look like symbols
+Style/SymbolArray:
+  EnforcedStyle: brackets

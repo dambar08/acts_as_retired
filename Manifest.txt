@@ -1,0 +1,11 @@
+lib/acts_as_retired.rb
+lib/acts_as_retired/association_reflection.rb
+lib/acts_as_retired/associations.rb
+lib/acts_as_retired/core.rb
+lib/acts_as_retired/relation.rb
+lib/acts_as_retired/validations.rb
+lib/acts_as_retired/version.rb
+LICENSE
+CHANGELOG.md
+CONTRIBUTING.md
+README.md
