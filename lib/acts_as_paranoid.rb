@@ -28,9 +28,8 @@ module ActsAsRetired
       column_type: "time",
       recover_dependent_associations: true,
       dependent_recovery_window: 2.minutes,
-      double_tap_destroys_fully: true
     }
-    paranoid_configuration[:deleted_value] = "deleted" if options[:column_type] == "string"
+    paranoid_configuration[:deleted_value] = "retired" if options[:column_type] == "string"
 
     paranoid_configuration.merge!(options) # user options
 

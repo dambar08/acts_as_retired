@@ -113,16 +113,16 @@ class AssociationsTest < ActiveSupport::TestCase
           _(Book.all).must_equal [book]
         end
 
-        it "includes destroyed records with deleted join records in .with_deleted scope" do
+        it "includes destroyed records with retired join records in .with_retired scope" do
           book.destroy
 
-          _(author.reload.books.with_deleted).must_equal [book]
+          _(author.reload.books.with_retired).must_equal [book]
         end
 
-        it "includes records with deleted join records in .with_deleted scope" do
+        it "includes records with retired join records in .with_retired scope" do
           author.books.destroy(book)
 
-          _(author.reload.books.with_deleted).must_equal [book]
+          _(author.reload.books.with_retired).must_equal [book]
         end
       end
     end
@@ -198,16 +198,16 @@ class AssociationsTest < ActiveSupport::TestCase
           _(Book.all).must_equal [book]
         end
 
-        it "includes destroyed associated records in .with_deleted scope" do
+        it "includes destroyed associated records in .with_retired scope" do
           book.destroy
 
-          _(author.reload.books.with_deleted).must_equal [book]
+          _(author.reload.books.with_retired).must_equal [book]
         end
 
-        it "includes records with deleted join records in .with_deleted scope" do
+        it "includes records with retired join records in .with_retired scope" do
           author.books.destroy(book)
 
-          _(author.reload.books.with_deleted).must_equal [book]
+          _(author.reload.books.with_retired).must_equal [book]
         end
       end
     end

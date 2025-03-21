@@ -78,7 +78,7 @@ class ValidatesUniquenessTest < ActiveSupport::TestCase
       ParanoidUniqueness.first.destroy
 
       refute_predicate record, :valid?
-      ParanoidUniqueness.only_deleted.first.destroy!
+      ParanoidUniqueness.only_retired.first.retire!
 
       assert_predicate record, :valid?
     end
@@ -91,7 +91,7 @@ class ValidatesUniquenessTest < ActiveSupport::TestCase
       ParanoidUniquenessWithoutDeleted.first.destroy
 
       assert_predicate record, :valid?
-      ParanoidUniquenessWithoutDeleted.only_deleted.first.destroy!
+      ParanoidUniquenessWithoutDeleted.only_retired.first.retire!
 
       assert_predicate record, :valid?
     end

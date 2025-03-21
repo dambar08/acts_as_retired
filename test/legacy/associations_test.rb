@@ -40,7 +40,7 @@ class AssociationsTest < ActiveSupport::TestCase
 
   class ParanoidBelongsToPolymorphic < ActiveRecord::Base
     acts_as_retired
-    belongs_to :parent, polymorphic: true, with_deleted: true
+    belongs_to :parent, polymorphic: true, with_retired: true
   end
 
   class NotParanoidHasManyAsParent < ActiveRecord::Base
@@ -58,17 +58,17 @@ class AssociationsTest < ActiveSupport::TestCase
     belongs_to :paranoid_time_with_scope,
                -> { where(name: "hello").includes(:not_paranoid) },
                class_name: "ParanoidTime", foreign_key: :paranoid_time_id
-    belongs_to :paranoid_time_with_deleted, class_name: "ParanoidTime",
+    belongs_to :paranoid_time_with_retired, class_name: "ParanoidTime",
                                             foreign_key: :paranoid_time_id,
-                                            with_deleted: true
-    belongs_to :paranoid_time_with_scope_with_deleted,
+                                            with_retired: true
+    belongs_to :paranoid_time_with_scope_with_retired,
                -> { where(name: "hello").includes(:not_paranoid) },
                class_name: "ParanoidTime", foreign_key: :paranoid_time_id,
-               with_deleted: true
-    belongs_to :paranoid_time_polymorphic_with_deleted, class_name: "ParanoidTime",
+               with_retired: true
+    belongs_to :paranoid_time_polymorphic_with_retired, class_name: "ParanoidTime",
                                                         foreign_key: :paranoid_time_id,
                                                         polymorphic: true,
-                                                        with_deleted: true
+                                                        with_retired: true
 
     belongs_to :paranoid_belongs_dependant, dependent: :destroy
   end
@@ -123,15 +123,15 @@ class AssociationsTest < ActiveSupport::TestCase
   end
 
   class HasOneNotParanoid < ActiveRecord::Base
-    belongs_to :paranoid_time, with_deleted: true
+    belongs_to :paranoid_time, with_retired: true
   end
 
   class DoubleHasOneNotParanoid < HasOneNotParanoid
-    belongs_to :paranoid_time, with_deleted: true
+    belongs_to :paranoid_time, with_retired: true
     begin
       verbose = $VERBOSE
       $VERBOSE = false
-      belongs_to :paranoid_time, with_deleted: true
+      belongs_to :paranoid_time, with_retired: true
     ensure
       $VERBOSE = verbose
     end
@@ -146,17 +146,17 @@ class AssociationsTest < ActiveSupport::TestCase
 
   class ParanoidChild < ActiveRecord::Base
     acts_as_retired
-    belongs_to :paranoid_parent, with_deleted: true
+    belongs_to :paranoid_parent, with_retired: true
   end
 
   class ParanoidNoInverseChild < ActiveRecord::Base
     acts_as_retired
-    belongs_to :paranoid_parent, with_deleted: true, inverse_of: false
+    belongs_to :paranoid_parent, with_retired: true, inverse_of: false
   end
 
   class ParanoidForeignKeyChild < ActiveRecord::Base
     acts_as_retired
-    belongs_to :paranoid_parent, with_deleted: true, foreign_key: :paranoid_parent_id
+    belongs_to :paranoid_parent, with_retired: true, foreign_key: :paranoid_parent_id
   end
 
   # rubocop:disable Metrics/AbcSize
@@ -183,7 +183,7 @@ class AssociationsTest < ActiveSupport::TestCase
         t.string    :name
         t.datetime  :retired_at
         t.integer   :paranoid_time_id
-        t.string    :paranoid_time_polymorphic_with_deleted_type
+        t.string    :paranoid_time_polymorphic_with_retired_type
         t.integer   :paranoid_belongs_dependant_id
 
         timestamps t
@@ -319,15 +319,15 @@ class AssociationsTest < ActiveSupport::TestCase
 
     assert_equal 0, ParanoidDestroyCompany.count
     assert_equal 0, ParanoidProduct.count
-    assert_equal 1, ParanoidDestroyCompany.with_deleted.count
-    assert_equal 1, ParanoidProduct.with_deleted.count
+    assert_equal 1, ParanoidDestroyCompany.with_retired.count
+    assert_equal 1, ParanoidProduct.with_retired.count
 
-    ParanoidDestroyCompany.with_deleted.first.destroy
+    ParanoidDestroyCompany.with_retired.first.destroy
 
     assert_equal 0, ParanoidDestroyCompany.count
     assert_equal 0, ParanoidProduct.count
-    assert_equal 0, ParanoidDestroyCompany.with_deleted.count
-    assert_equal 0, ParanoidProduct.with_deleted.count
+    assert_equal 0, ParanoidDestroyCompany.with_retired.count
+    assert_equal 0, ParanoidProduct.with_retired.count
   end
 
   def test_removal_with_delete_all_associations
@@ -341,15 +341,15 @@ class AssociationsTest < ActiveSupport::TestCase
 
     assert_equal 0, ParanoidDeleteCompany.count
     assert_equal 0, ParanoidProduct.count
-    assert_equal 1, ParanoidDeleteCompany.with_deleted.count
-    assert_equal 1, ParanoidProduct.with_deleted.count
+    assert_equal 1, ParanoidDeleteCompany.with_retired.count
+    assert_equal 1, ParanoidProduct.with_retired.count
 
-    ParanoidDeleteCompany.with_deleted.first.destroy
+    ParanoidDeleteCompany.with_retired.first.destroy
 
     assert_equal 0, ParanoidDeleteCompany.count
     assert_equal 0, ParanoidProduct.count
-    assert_equal 0, ParanoidDeleteCompany.with_deleted.count
-    assert_equal 0, ParanoidProduct.with_deleted.count
+    assert_equal 0, ParanoidDeleteCompany.with_retired.count
+    assert_equal 0, ParanoidProduct.with_retired.count
   end
 
   def test_belongs_to_with_scope_option
@@ -385,40 +385,40 @@ class AssociationsTest < ActiveSupport::TestCase
     includes_values = ParanoidTime.includes(:not_paranoid).includes_values
 
     assert_equal includes_values, paranoid_has_many_dependant
-      .association(:paranoid_time_with_scope_with_deleted).scope.includes_values
+      .association(:paranoid_time_with_scope_with_retired).scope.includes_values
 
     paranoid_time = ParanoidTime.create(name: "not-hello")
     paranoid_has_many_dependant.paranoid_time = paranoid_time
     paranoid_has_many_dependant.save!
 
-    assert_nil paranoid_has_many_dependant.paranoid_time_with_scope_with_deleted
+    assert_nil paranoid_has_many_dependant.paranoid_time_with_scope_with_retired
 
     paranoid_time.update(name: "hello")
     paranoid_has_many_dependant.reload
 
     assert_equal paranoid_time, paranoid_has_many_dependant
-      .paranoid_time_with_scope_with_deleted
+      .paranoid_time_with_scope_with_retired
 
     paranoid_time.destroy
     paranoid_has_many_dependant.reload
 
     assert_equal paranoid_time, paranoid_has_many_dependant
-      .paranoid_time_with_scope_with_deleted
+      .paranoid_time_with_scope_with_retired
   end
 
-  def test_belongs_to_with_deleted
+  def test_belongs_to_with_retired
     paranoid_time = ParanoidTime.create! name: "paranoid"
     paranoid_has_many_dependant = paranoid_time.paranoid_has_many_dependants
       .create(name: "dependant!")
 
     assert_equal paranoid_time, paranoid_has_many_dependant.paranoid_time
-    assert_equal paranoid_time, paranoid_has_many_dependant.paranoid_time_with_deleted
+    assert_equal paranoid_time, paranoid_has_many_dependant.paranoid_time_with_retired
 
     paranoid_time.destroy
     paranoid_has_many_dependant.reload
 
     assert_nil paranoid_has_many_dependant.paranoid_time
-    assert_equal paranoid_time, paranoid_has_many_dependant.paranoid_time_with_deleted
+    assert_equal paranoid_time, paranoid_has_many_dependant.paranoid_time_with_retired
   end
 
   def test_building_belongs_to_associations
@@ -430,14 +430,14 @@ class AssociationsTest < ActiveSupport::TestCase
                  paranoid_destroy_company.paranoid_products.first.paranoid_destroy_company
   end
 
-  def test_building_belongs_to_associations_with_deleted
+  def test_building_belongs_to_associations_with_retired
     paranoid_child = ParanoidChild.new
     paranoid_parent = ParanoidParent.new(paranoid_children: [paranoid_child])
 
     assert_equal paranoid_parent, paranoid_parent.paranoid_children.first.paranoid_parent
   end
 
-  def test_building_polymorphic_belongs_to_associations_with_deleted
+  def test_building_polymorphic_belongs_to_associations_with_retired
     paranoid_belongs_to = ParanoidBelongsToPolymorphic.new
     paranoid_has_many =
       ParanoidHasManyAsParent.new(paranoid_belongs_to_polymorphics: [paranoid_belongs_to])
@@ -446,56 +446,56 @@ class AssociationsTest < ActiveSupport::TestCase
                  paranoid_has_many.paranoid_belongs_to_polymorphics.first.parent
   end
 
-  def test_building_belongs_to_associations_with_deleted_with_inverse_of_false
+  def test_building_belongs_to_associations_with_retired_with_inverse_of_false
     paranoid_child = ParanoidNoInverseChild.new
     paranoid_parent = ParanoidParent.new(paranoid_no_inverse_children: [paranoid_child])
 
     assert_nil paranoid_parent.paranoid_no_inverse_children.first.paranoid_parent
   end
 
-  def test_building_belongs_to_associations_with_deleted_with_foreign_key
+  def test_building_belongs_to_associations_with_retired_with_foreign_key
     paranoid_child = ParanoidForeignKeyChild.new
     paranoid_parent = ParanoidParent.new(paranoid_foreign_key_children: [paranoid_child])
 
     assert_nil paranoid_parent.paranoid_foreign_key_children.first.paranoid_parent
   end
 
-  def test_belongs_to_with_deleted_as_inverse_of_has_many
+  def test_belongs_to_with_retired_as_inverse_of_has_many
     has_many_reflection = ParanoidParent.reflect_on_association :paranoid_children
     belongs_to_reflection = ParanoidChild.reflect_on_association :paranoid_parent
 
     assert_equal belongs_to_reflection, has_many_reflection.inverse_of
   end
 
-  def test_belongs_to_polymorphic_with_deleted
+  def test_belongs_to_polymorphic_with_retired
     paranoid_time = ParanoidTime.create! name: "paranoid"
     paranoid_has_many_dependant = ParanoidHasManyDependant
-      .create!(name: "dependant!", paranoid_time_polymorphic_with_deleted: paranoid_time)
+      .create!(name: "dependant!", paranoid_time_polymorphic_with_retired: paranoid_time)
 
     assert_equal paranoid_time, paranoid_has_many_dependant.paranoid_time
     assert_equal paranoid_time, paranoid_has_many_dependant
-      .paranoid_time_polymorphic_with_deleted
+      .paranoid_time_polymorphic_with_retired
 
     paranoid_time.destroy
 
     assert_nil paranoid_has_many_dependant.reload.paranoid_time
     assert_equal paranoid_time, paranoid_has_many_dependant
-      .reload.paranoid_time_polymorphic_with_deleted
+      .reload.paranoid_time_polymorphic_with_retired
   end
 
-  def test_belongs_to_nil_polymorphic_with_deleted
+  def test_belongs_to_nil_polymorphic_with_retired
     paranoid_time = ParanoidTime.create! name: "paranoid"
     paranoid_has_many_dependant =
       ParanoidHasManyDependant.create!(name: "dependant!",
-                                       paranoid_time_polymorphic_with_deleted: nil)
+                                       paranoid_time_polymorphic_with_retired: nil)
 
     assert_nil paranoid_has_many_dependant.paranoid_time
-    assert_nil paranoid_has_many_dependant.paranoid_time_polymorphic_with_deleted
+    assert_nil paranoid_has_many_dependant.paranoid_time_polymorphic_with_retired
 
     paranoid_time.destroy
 
     assert_nil paranoid_has_many_dependant.reload.paranoid_time
-    assert_nil paranoid_has_many_dependant.reload.paranoid_time_polymorphic_with_deleted
+    assert_nil paranoid_has_many_dependant.reload.paranoid_time_polymorphic_with_retired
   end
 
   def test_belongs_to_options
@@ -503,24 +503,24 @@ class AssociationsTest < ActiveSupport::TestCase
       .with_indifferent_access[:paranoid_time]
 
     assert_equal :belongs_to, paranoid_time.macro
-    assert_nil paranoid_time.options[:with_deleted]
+    assert_nil paranoid_time.options[:with_retired]
   end
 
-  def test_belongs_to_with_deleted_options
-    paranoid_time_with_deleted =
+  def test_belongs_to_with_retired_options
+    paranoid_time_with_retired =
       ParanoidHasManyDependant.reflections
-        .with_indifferent_access[:paranoid_time_with_deleted]
+        .with_indifferent_access[:paranoid_time_with_retired]
 
-    assert_equal :belongs_to, paranoid_time_with_deleted.macro
-    assert paranoid_time_with_deleted.options[:with_deleted]
+    assert_equal :belongs_to, paranoid_time_with_retired.macro
+    assert paranoid_time_with_retired.options[:with_retired]
   end
 
-  def test_belongs_to_polymorphic_with_deleted_options
-    paranoid_time_polymorphic_with_deleted = ParanoidHasManyDependant.reflections
-      .with_indifferent_access[:paranoid_time_polymorphic_with_deleted]
+  def test_belongs_to_polymorphic_with_retired_options
+    paranoid_time_polymorphic_with_retired = ParanoidHasManyDependant.reflections
+      .with_indifferent_access[:paranoid_time_polymorphic_with_retired]
 
-    assert_equal :belongs_to, paranoid_time_polymorphic_with_deleted.macro
-    assert paranoid_time_polymorphic_with_deleted.options[:with_deleted]
+    assert_equal :belongs_to, paranoid_time_polymorphic_with_retired.macro
+    assert paranoid_time_polymorphic_with_retired.options[:with_retired]
   end
 
   def test_only_find_associated_records_when_finding_with_paranoid_deleted
@@ -539,42 +539,42 @@ class AssociationsTest < ActiveSupport::TestCase
     parent.reload
 
     assert_empty parent.paranoid_has_many_dependants.to_a
-    assert_equal [child], parent.paranoid_has_many_dependants.with_deleted.to_a
+    assert_equal [child], parent.paranoid_has_many_dependants.with_retired.to_a
   end
 
-  def test_join_with_model_with_deleted
+  def test_join_with_model_with_retired
     obj = ParanoidHasManyDependant.create(paranoid_time: ParanoidTime.create)
 
     assert_not_nil obj.paranoid_time
-    assert_not_nil obj.paranoid_time_with_deleted
+    assert_not_nil obj.paranoid_time_with_retired
 
     obj.paranoid_time.destroy
     obj.reload
 
     assert_nil obj.paranoid_time
-    assert_not_nil obj.paranoid_time_with_deleted
+    assert_not_nil obj.paranoid_time_with_retired
 
     # Note that obj is destroyed because of dependent: :destroy in ParanoidTime
     assert_predicate obj, :destroyed?
 
-    assert_empty ParanoidHasManyDependant.with_deleted.joins(:paranoid_time)
+    assert_empty ParanoidHasManyDependant.with_retired.joins(:paranoid_time)
     assert_equal [obj],
-                 ParanoidHasManyDependant.with_deleted.joins(:paranoid_time_with_deleted)
+                 ParanoidHasManyDependant.with_retired.joins(:paranoid_time_with_retired)
   end
 
-  def test_includes_with_deleted
+  def test_includes_with_retired
     paranoid_time = ParanoidTime.create! name: "paranoid"
     paranoid_time.paranoid_has_many_dependants.create(name: "dependant!")
 
     paranoid_time.destroy
 
-    ParanoidHasManyDependant.with_deleted
-      .includes(:paranoid_time_with_deleted).each do |hasmany|
-      assert_not_nil hasmany.paranoid_time_with_deleted
+    ParanoidHasManyDependant.with_retired
+      .includes(:paranoid_time_with_retired).each do |hasmany|
+      assert_not_nil hasmany.paranoid_time_with_retired
     end
   end
 
-  def test_includes_with_deleted_with_polymorphic_parent
+  def test_includes_with_retired_with_polymorphic_parent
     not_paranoid_parent = NotParanoidHasManyAsParent.create(name: "not paranoid parent")
     paranoid_parent = ParanoidHasManyAsParent.create(name: "paranoid parent")
     ParanoidBelongsToPolymorphic.create(name: "belongs_to", parent: not_paranoid_parent)
@@ -582,7 +582,7 @@ class AssociationsTest < ActiveSupport::TestCase
 
     paranoid_parent.destroy
 
-    ParanoidBelongsToPolymorphic.with_deleted.includes(:parent).each do |hasmany|
+    ParanoidBelongsToPolymorphic.with_retired.includes(:parent).each do |hasmany|
       assert_not_nil hasmany.parent
     end
   end
@@ -596,11 +596,11 @@ class AssociationsTest < ActiveSupport::TestCase
 
     left.reload
 
-    assert_empty left.paranoid_many_many_children, "Linking objects not deleted"
+    assert_empty left.paranoid_many_many_children, "Linking objects not retired"
     assert_empty left.paranoid_many_many_parent_rights,
                  "Associated objects not unlinked"
     assert_equal right, ParanoidManyManyParentRight.find(right.id),
-                 "Associated object deleted"
+                 "Associated object retired"
   end
 
   def test_cannot_find_a_paranoid_destroyed_many_many_association
@@ -612,11 +612,11 @@ class AssociationsTest < ActiveSupport::TestCase
 
     left.reload
 
-    assert_empty left.paranoid_many_many_children, "Linking objects not deleted"
+    assert_empty left.paranoid_many_many_children, "Linking objects not retired"
     assert_empty left.paranoid_many_many_parent_rights,
                  "Associated objects not unlinked"
     assert_equal right, ParanoidManyManyParentRight.find(right.id),
-                 "Associated object deleted"
+                 "Associated object retired"
   end
 
   def test_cannot_find_a_has_many_through_object_when_its_linking_object_is_soft_destroyed
@@ -630,7 +630,7 @@ class AssociationsTest < ActiveSupport::TestCase
 
     left.reload
 
-    assert_empty left.paranoid_many_many_parent_rights, "Associated objects not deleted"
+    assert_empty left.paranoid_many_many_parent_rights, "Associated objects not retired"
   end
 
   def test_cannot_find_a_paranoid_deleted_model
@@ -701,7 +701,7 @@ class AssociationsTest < ActiveSupport::TestCase
     assert_not_nil not_paranoid.paranoid_time
   end
 
-  def test_double_belongs_to_with_deleted
+  def test_double_belongs_to_with_retired
     not_paranoid = DoubleHasOneNotParanoid.create
     not_paranoid.paranoid_time = ParanoidTime.create
 

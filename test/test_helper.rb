@@ -51,7 +51,7 @@ module ParanoidTestHelpers
   def assert_paranoid_deletion(model)
     row = find_row(model)
 
-    assert_not_nil row, "#{model.class} entirely deleted"
+    assert_not_nil row, "#{model.class} entirely retired"
     assert_not_nil row["retired_at"], "Deleted at not set"
   end
 

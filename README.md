@@ -1,8 +1,8 @@
 # ActsAsRetired
 
-[![CI](https://github.com/ActsAsRetired/acts_as_retired/actions/workflows/ruby.yml/badge.svg)](https://github.com/ActsAsRetired/acts_as_retired/actions/workflows/ruby.yml)
+[![CI](https://github.com/dambar08/acts_as_retired/actions/workflows/ruby.yml/badge.svg)](https://github.com/dambar08/acts_as_retired/actions/workflows/ruby.yml)
 
-A Rails plugin to add soft delete.
+A Rails plugin to add soft retire.
 
 This gem can be used to hide records instead of deleting them, making them
 recoverable later.
@@ -18,8 +18,8 @@ please require an older version of the `acts_as_retired` gem.
 
 * Using `acts_as_retired` and ActiveStorage on the same model
   [leads to a SystemStackError](https://github.com/ActsAsRetired/acts_as_retired/issues/103).
-* You cannot directly create a model in a deleted state, or update a model
-  after it's been deleted.
+* You cannot directly create a model in a retired state, or update a model
+  after it's been retired.
 
 ## Usage
 
@@ -36,13 +36,13 @@ bundle install
 #### Create migration
 
 ```shell
-bin/rails generate migration AddDeletedAtToParanoiac retired_at:datetime:index
+bin/rails generate migration AddRetiredAtToRetirec retired_at:datetime:index
 ```
 
 #### Enable ActsAsRetired
 
 ```ruby
-class Paranoiac < ActiveRecord::Base
+class Retirec < ActiveRecord::Base
   acts_as_retired
 end
 ```
@@ -55,7 +55,7 @@ By default, ActsAsRetired assumes a record's *deletion* is stored in a
 If you are using a different column name and type to store a record's
 *deletion*, you can specify them as follows:
 
-- `column:      'deleted'`
+- `column:      'retired'`
 - `column_type: 'boolean'`
 
 While *column* can be anything (as long as it exists in your database), *type*
@@ -69,28 +69,28 @@ Note that the `time` type corresponds to the database column type `datetime`
 in your Rails migrations and schema.
 
 If your column type is a `string`, you can also specify which value to use when
-marking an object as deleted by passing `:deleted_value` (default is
-"deleted"). Any records with a non-matching value in this column will be
-treated normally, i.e., as not deleted.
+marking an object as retired by passing `:deleted_value` (default is
+"retired"). Any records with a non-matching value in this column will be
+treated normally, i.e., as not retired.
 
 If your column type is a `boolean`, it is possible to specify `allow_nulls`
 option which is `true` by default. When set to `false`, entities that have
-`false` value in this column will be considered not deleted, and those which
-have `true` will be considered deleted. When `true` everything that has a
-not-null value will be considered deleted.
+`false` value in this column will be considered not retired, and those which
+have `true` will be considered retired. When `true` everything that has a
+not-null value will be considered retired.
 
 ### Filtering
 
-If a record is deleted by ActsAsRetired, it won't be retrieved when accessing
+If a record is retired by ActsAsRetired, it won't be retrieved when accessing
 the database.
 
-So, `Paranoiac.all` will **not** include the **deleted records**.
+So, `Retirec.all` will **not** include the **retired records**.
 
 When you want to access them, you have 2 choices:
 
 ```ruby
-Paranoiac.only_deleted # retrieves only the deleted records
-Paranoiac.with_deleted # retrieves all records, deleted or not
+Retirec.only_retired # retrieves only the retired records
+Retirec.with_retired # retrieves all records, retired or not
 ```
 
 When using the default `column_type` of `'time'`, the following extra scopes
@@ -99,11 +99,11 @@ are provided:
 ```ruby
 time = Time.now
 
-Paranoiac.deleted_after_time(time)
-Paranoiac.deleted_before_time(time)
+Retirec.retired_after_time(time)
+Retirec.retired_before_time(time)
 
 # Or roll it all up and get a nice window:
-Paranoiac.deleted_inside_time_window(time, 2.minutes)
+Retirec.deleted_inside_time_window(time, 2.minutes)
 ```
 
 ### Real deletion
@@ -111,42 +111,16 @@ Paranoiac.deleted_inside_time_window(time, 2.minutes)
 In order to really delete a record, just use:
 
 ```ruby
-paranoiac.destroy_fully!
-Paranoiac.delete_all!(conditions)
+retirec.retire_fully!
+Retirec.retire_all!(conditions)
 ```
-
-**NOTE:** The `.destroy!` method is still usable, but equivalent to `.destroy`.
-It just hides the object.
-
-Alternatively you can permanently delete a record by calling `destroy` or
-`delete_all` on the object **twice**.
-
-If a record was already deleted (hidden by `ActsAsRetired`) and you delete it
-again, it will be removed from the database.
-
-Take this example:
-
-```ruby
-p = Paranoiac.first
-
-# does NOT delete the first record, just hides it
-p.destroy
-
-# deletes the first record from the database
-Paranoiac.only_deleted.where(id: p.id).first.destroy
-```
-
-This behaviour can be disabled by setting the configuration option. In a future
-version, `false` will be the default setting.
-
-- `double_tap_destroys_fully: false`
 
 ### Recovery
 
 Recovery is easy. Just invoke `recover` on it, like this:
 
 ```ruby
-Paranoiac.only_deleted.where("name = ?", "not dead yet").first.recover
+Retirec.only_retired.where("name = ?", "not dead yet").first.recover
 ```
 
 All associations marked as `dependent: :destroy` are also recursively recovered.
@@ -155,23 +129,23 @@ If you would like to disable this behavior, you can call `recover` with the
 `recursive` option:
 
 ```ruby
-Paranoiac.only_deleted.where("name = ?", "not dead yet").first.recover(recursive: false)
+Retirec.only_retired.where("name = ?", "not dead yet").first.recover(recursive: false)
 ```
 
 If you would like to change this default behavior for one model, you can use
 the `recover_dependent_associations` option
 
 ```ruby
-class Paranoiac < ActiveRecord::Base
+class Retirec < ActiveRecord::Base
   acts_as_retired recover_dependent_associations: false
 end
 ```
 
-By default, dependent records will be recovered if they were deleted within 2
+By default, dependent records will be recovered if they were retired within 2
 minutes of the object upon which they depend.
 
 This restores the objects to the state before the recursive deletion without
-restoring other objects that were deleted earlier.
+restoring other objects that were retired earlier.
 
 The behavior is only available when both parent and dependant are using
 timestamp fields to mark deletion, which is the default behavior.
@@ -179,7 +153,7 @@ timestamp fields to mark deletion, which is the default behavior.
 This window can be changed with the `dependent_recovery_window` option:
 
 ```ruby
-class Paranoiac < ActiveRecord::Base
+class Retirec < ActiveRecord::Base
   acts_as_retired
   has_many :paranoids, dependent: :destroy
 end
@@ -188,7 +162,7 @@ class Paranoid < ActiveRecord::Base
   belongs_to :paranoic
 
   # Paranoid objects will be recovered alongside Paranoic objects
-  # if they were deleted within 10 minutes of the Paranoic object
+  # if they were retired within 10 minutes of the Paranoic object
   acts_as_retired dependent_recovery_window: 10.minutes
 end
 ```
@@ -196,7 +170,7 @@ end
 or in the recover statement
 
 ```ruby
-Paranoiac.only_deleted.where("name = ?", "not dead yet").first
+Retirec.only_retired.where("name = ?", "not dead yet").first
   .recover(recovery_window: 30.seconds)
 ```
 
@@ -206,7 +180,7 @@ You can invoke `recover!` if you wish to raise an error if the recovery fails.
 The error generally stems from ActiveRecord.
 
 ```ruby
-Paranoiac.only_deleted.where("name = ?", "not dead yet").first.recover!
+Retirec.only_retired.where("name = ?", "not dead yet").first.recover!
 # => ActiveRecord::RecordInvalid: Validation failed: Name already exists
 ```
 
@@ -214,29 +188,29 @@ Optionally, you may also raise the error by passing `raise_error: true` to the
 `recover` method. This behaves the same as `recover!`.
 
 ```ruby
-Paranoiac.only_deleted.where("name = ?", "not dead yet").first.recover(raise_error: true)
+Retirec.only_retired.where("name = ?", "not dead yet").first.recover(raise_error: true)
 ```
 
 ### Validation
 
 ActiveRecord's built-in uniqueness validation does not account for records
-deleted by ActsAsRetired. If you want to check for uniqueness among
-non-deleted records only, use the macro `validates_as_paranoid` in your model.
+retired by ActsAsRetired. If you want to check for uniqueness among
+non-retired records only, use the macro `validates_as_paranoid` in your model.
 Then, instead of using `validates_uniqueness_of`, use
-`validates_uniqueness_of_without_deleted`. This will keep deleted records from
+`validates_uniqueness_of_without_deleted`. This will keep retired records from
 counting against the uniqueness check.
 
 ```ruby
-class Paranoiac < ActiveRecord::Base
+class Retirec < ActiveRecord::Base
   acts_as_retired
   validates_as_paranoid
   validates_uniqueness_of_without_deleted :name
 end
 
-p1 = Paranoiac.create(name: 'foo')
+p1 = Retirec.create(name: 'foo')
 p1.destroy
 
-p2 = Paranoiac.new(name: 'foo')
+p2 = Retirec.new(name: 'foo')
 p2.valid? #=> true
 p2.save
 
@@ -245,24 +219,24 @@ p1.recover #=> fails validation!
 
 ### Status
 
-A paranoid object could be deleted or destroyed fully.
+A paranoid object could be retired or destroyed fully.
 
-You can check if the object is deleted with the `deleted?` helper
+You can check if the object is retired with the `retired?` helper
 
 ```ruby
-Paranoiac.create(name: 'foo').destroy
-Paranoiac.with_deleted.first.deleted? #=> true
+Retirec.create(name: 'foo').destroy
+Retirec.with_retired.first.retired? #=> true
 ```
 
-After the first call to `.destroy` the object is `deleted?`.
+After the first call to `.destroy` the object is `retired?`.
 
 You can check if the object is fully destroyed with `destroyed_fully?` or `deleted_fully?`.
 
 ```ruby
-Paranoiac.create(name: 'foo').destroy
-Paranoiac.with_deleted.first.deleted? #=> true
-Paranoiac.with_deleted.first.destroyed_fully? #=> false
-p1 = Paranoiac.with_deleted.first
+Retirec.create(name: 'foo').destroy
+Retirec.with_retired.first.retired? #=> true
+Retirec.with_retired.first.destroyed_fully? #=> false
+p1 = Retirec.with_retired.first
 p1.destroy # this fully destroys the object
 p1.destroyed_fully? #=> true
 p1.deleted_fully? #=> true
@@ -270,40 +244,40 @@ p1.deleted_fully? #=> true
 
 ### Scopes
 
-As you've probably guessed, `with_deleted` and `only_deleted` are scopes. You
+As you've probably guessed, `with_retired` and `only_retired` are scopes. You
 can, however, chain them freely with other scopes you might have.
 
 For example:
 
 ```ruby
-Paranoiac.pretty.with_deleted
+Retirec.pretty.with_retired
 ```
 
 This is exactly the same as:
 
 ```ruby
-Paranoiac.with_deleted.pretty
+Retirec.with_retired.pretty
 ```
 
 You can work freely with scopes and it will just work:
 
 ```ruby
-class Paranoiac < ActiveRecord::Base
+class Retirec < ActiveRecord::Base
   acts_as_retired
   scope :pretty, where(pretty: true)
 end
 
-Paranoiac.create(pretty: true)
+Retirec.create(pretty: true)
 
-Paranoiac.pretty.count #=> 1
-Paranoiac.only_deleted.count #=> 0
-Paranoiac.pretty.only_deleted.count #=> 0
+Retirec.pretty.count #=> 1
+Retirec.only_retired.count #=> 0
+Retirec.pretty.only_retired.count #=> 0
 
-Paranoiac.first.destroy
+Retirec.first.destroy
 
-Paranoiac.pretty.count #=> 0
-Paranoiac.only_deleted.count #=> 1
-Paranoiac.pretty.only_deleted.count #=> 1
+Retirec.pretty.count #=> 0
+Retirec.only_retired.count #=> 1
+Retirec.pretty.only_retired.count #=> 1
 ```
 
 ### Associations
@@ -311,21 +285,21 @@ Paranoiac.pretty.only_deleted.count #=> 1
 Associations are also supported.
 
 From the simplest behaviors you'd expect to more nifty things like the ones
-mentioned previously or the usage of the `:with_deleted` option with
+mentioned previously or the usage of the `:with_retired` option with
 `belongs_to`
 
 ```ruby
 class Parent < ActiveRecord::Base
-  has_many :children, class_name: "ParanoiacChild"
+  has_many :children, class_name: "RetirecChild"
 end
 
-class ParanoiacChild < ActiveRecord::Base
+class RetirecChild < ActiveRecord::Base
   acts_as_retired
   belongs_to :parent
 
   # You may need to provide a foreign_key like this
   belongs_to :parent_including_deleted, class_name: "Parent",
-    foreign_key: 'parent_id', with_deleted: true
+    foreign_key: 'parent_id', with_retired: true
 end
 
 parent = Parent.first
@@ -343,10 +317,10 @@ recovery of objects. There is `before_recover` and `after_recover` which will
 be triggered before and after the recovery of an object respectively.
 
 Default ActiveRecord callbacks such as `before_destroy` and `after_destroy` will
-be triggered around `.destroy!` and `.destroy_fully!`.
+be triggered around `.retire!` and `.destroy_fully!`.
 
 ```ruby
-class Paranoiac < ActiveRecord::Base
+class Retirec < ActiveRecord::Base
   acts_as_retired
 
   before_recover :set_counts
@@ -358,12 +332,12 @@ end
 
 Watch out for these caveats:
 
-- You cannot use scopes named `with_deleted` and `only_deleted`
+- You cannot use scopes named `with_retired` and `only_retired`
 - You cannot use scopes named `deleted_inside_time_window`,
-  `deleted_before_time`, `deleted_after_time` **if** your paranoid column's
+  `retired_before_time`, `retired_after_time` **if** your paranoid column's
   type is `time`
-- You cannot name association `*_with_deleted`
-- `unscoped` will return all records, deleted or not
+- You cannot name association `*_with_retired`
+- `unscoped` will return all records, retired or not
 
 # Acknowledgements
 

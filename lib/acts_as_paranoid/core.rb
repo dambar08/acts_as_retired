@@ -19,12 +19,12 @@ module ActsAsRetired
         set_callback :recover, :after, method
       end
 
-      def with_deleted
+      def with_retired
         without_paranoid_default_scope
       end
 
-      def only_deleted
-        if string_type_with_deleted_value?
+      def only_retired
+        if string_type_with_retired_value?
           without_paranoid_default_scope
             .where(paranoid_column_reference => paranoid_configuration[:deleted_value])
         elsif boolean_type_not_nullable?
@@ -34,8 +34,8 @@ module ActsAsRetired
         end
       end
 
-      def delete_all!(conditions = nil)
-        without_paranoid_default_scope.delete_all!(conditions)
+      def retire_all!(conditions = nil)
+        without_paranoid_default_scope.retire_all!(conditions)
       end
 
       def delete_all(conditions = nil)
@@ -44,7 +44,7 @@ module ActsAsRetired
       end
 
       def paranoid_default_scope
-        if string_type_with_deleted_value?
+        if string_type_with_retired_value?
           all.table[paranoid_column].eq(nil)
             .or(all.table[paranoid_column].not_eq(paranoid_configuration[:deleted_value]))
         elsif boolean_type_not_nullable?
@@ -54,7 +54,7 @@ module ActsAsRetired
         end
       end
 
-      def string_type_with_deleted_value?
+      def string_type_with_retired_value?
         paranoid_column_type == :string && !paranoid_configuration[:deleted_value].nil?
       end
 
@@ -102,15 +102,15 @@ module ActsAsRetired
 
       def define_deleted_time_scopes
         scope :deleted_inside_time_window, lambda { |time, window|
-          deleted_after_time((time - window)).deleted_before_time((time + window))
+          retired_after_time((time - window)).retired_before_time((time + window))
         }
 
-        scope :deleted_after_time, lambda { |time|
-          only_deleted
+        scope :retired_after_time, lambda { |time|
+          only_retired
             .where("#{table_name}.#{paranoid_column} > ?", time)
         }
-        scope :deleted_before_time, lambda { |time|
-          only_deleted
+        scope :retired_before_time, lambda { |time|
+          only_retired
             .where("#{table_name}.#{paranoid_column} < ?", time)
         }
       end
@@ -142,7 +142,7 @@ module ActsAsRetired
       freeze
     end
 
-    def destroy_fully!
+    def retire_fully!
       with_transaction_returning_status do
         run_callbacks :destroy do
           destroy_dependent_associations!
@@ -151,7 +151,7 @@ module ActsAsRetired
             # Handle composite keys, otherwise we would just use
             # `self.class.primary_key.to_sym => self.id`.
             self.class
-              .delete_all!([Array(self.class.primary_key), Array(id)].transpose.to_h)
+              .retire_all!([Array(self.class.primary_key), Array(id)].transpose.to_h)
             decrement_counters_on_associations
           end
 
@@ -168,7 +168,7 @@ module ActsAsRetired
     end
 
     def destroy
-      if !deleted?
+      if !retired?
         with_transaction_returning_status do
           run_callbacks :destroy do
             if persisted?
@@ -191,7 +191,7 @@ module ActsAsRetired
     end
 
     def recover(options = {})
-      return if !deleted?
+      return if !retired?
 
       options = {
         recursive: self.class.paranoid_configuration[:recover_dependent_associations],
@@ -221,10 +221,10 @@ module ActsAsRetired
       recover(options)
     end
 
-    def deleted?
+    def retired?
       return true if @destroyed
 
-      if self.class.string_type_with_deleted_value?
+      if self.class.string_type_with_retired_value?
         paranoid_value == paranoid_configuration[:deleted_value]
       elsif self.class.boolean_type_not_nullable?
         paranoid_value == true
@@ -233,7 +233,7 @@ module ActsAsRetired
       end
     end
 
-    alias destroyed? deleted?
+    alias destroyed? retired?
 
     def deleted_fully?
       @destroyed
@@ -255,7 +255,7 @@ module ActsAsRetired
         next unless (klass = assoc.klass).paranoid?
 
         klass
-          .only_deleted.merge(get_association_scope(assoc))
+          .only_retired.merge(get_association_scope(assoc))
           .each(&:destroy!)
       end
     end
@@ -268,7 +268,7 @@ module ActsAsRetired
         return
       end
 
-      scope = klass.only_deleted.merge(get_association_scope(assoc))
+      scope = klass.only_retired.merge(get_association_scope(assoc))
 
       # We can only recover by window if both parent and dependant have a
       # paranoid column type of :time.

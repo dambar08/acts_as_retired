@@ -13,9 +13,9 @@ module ActsAsRetired
         end
 
         alias_method :orig_delete_all, :delete_all
-        def delete_all!(conditions = nil)
+        def retire_all!(conditions = nil)
           if conditions
-            where(conditions).delete_all!
+            where(conditions).retire_all!
           else
             orig_delete_all
           end
@@ -25,11 +25,11 @@ module ActsAsRetired
           if paranoid?
             where(conditions).update_all(paranoid_deletion_attributes)
           else
-            delete_all!(conditions)
+            retire_all!(conditions)
           end
         end
 
-        def destroy_fully!(id_or_array)
+        def retire_fully!(id_or_array)
           where(primary_key => id_or_array).orig_delete_all
         end
       end
