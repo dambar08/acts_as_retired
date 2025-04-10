@@ -339,20 +339,4 @@ Watch out for these caveats:
 - You cannot name association `*_with_retired`
 - `unscoped` will return all records, retired or not
 
-# Acknowledgements
-
-* To [Rick Olson](https://github.com/technoweenie) for creating `acts_as_retired`
-* To [cheerfulstoic](https://github.com/cheerfulstoic) for adding recursive recovery
-* To [Jonathan Vaught](https://github.com/gravelpup) for adding paranoid validations
-* To [Geoffrey Hichborn](https://github.com/phene) for improving the overral code quality and adding support for after_commit
-* To [flah00](https://github.com/flah00) for adding support for STI-based associations (with :dependent)
-* To [vikramdhillon](https://github.com/vikramdhillon) for the idea and initial implementation of support for string column type
-* To [Craig Walker](https://github.com/softcraft-development) for Rails 3.1 support and fixing various pending issues
-* To [Charles G.](https://github.com/chuckg) for Rails 3.2 support and for making a desperately needed global code refactoring
-* To [Gonçalo Silva](https://github.com/goncalossilva) for supporting this gem prior to v0.4.3
-* To [Jean Boussier](https://github.com/byroot) for initial Rails 4.0.0 support
-* To [Matijs van Zuijlen](https://github.com/mvz) for Rails 4.1 and 4.2 support
-* To [Andrey Ponomarenko](https://github.com/sjke) for Rails 5 support
-* To [Daniel Rice](https://github.com/danielricecodes), [Josh Bryant](https://github.com/jbryant92), and [Romain Alexandre](https://github.com/RomainAlexandre) for Rails 6.0 support.
-
 See `LICENSE`.
